@@ -1,0 +1,4 @@
+1) Open file, add checkpoints
+2) Read checkpoints and execute the first on the queue
+3) Wait to the checkpoint to be completed to call the next one
+4) When the list is empty, close the program

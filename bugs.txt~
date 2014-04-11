@@ -1,0 +1,14 @@
+
+1) Segmentation fault at start
+
+-- Complete steps to reproduce the bug
+Just run it
+
+-- expected behavior
+No segmentation error
+
+-- observed (buggy) behavior
+Segmentation fault (core dumped)
+
+-- Fixed?
+
