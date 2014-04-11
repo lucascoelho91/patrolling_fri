@@ -1,11 +1,17 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <stdio.h>
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <actionlib_msgs/GoalStatusArray.h>
+#include <tf/tf.h>
 
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
+
+typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
 class Controller
 {
@@ -18,7 +24,8 @@ class Controller
 
     ros::NodeHandle *node;
     
-    geometry_msgs::PoseStamped currentGoal;
+    MoveBaseClient ac;
+    move_base_msgs::MoveBaseGoal currentGoal;
 
   public:
 
@@ -26,6 +33,7 @@ class Controller
     {
       if(msg->status_list[0].status == 3)
       {
+        ROS_INFO("Goal id: %s\n", msg->status_list[0].goal_id.id.c_str());
         if (!this->popListToGoal())
         {
           printf("We reached the end of the list of goals! Nothing to do anymore.\n");
@@ -34,20 +42,32 @@ class Controller
         else
         {
           this->publishGoal();
+          this->waitResultNavigation();
         }
       }
     }
 
     void publishGoal()
     {
-      movebasePub.publish(currentGoal);
+      ac.sendGoal(currentGoal);
+    }
+
+    void waitResultNavigation()
+    {
+      ac.waitForResult();
+    }
+
+    actionlib::SimpleClientGoalState getNavigationState()
+    {
+      return ac.getState();
     }
 
     void setCurrentGoal(double x, double y, double theta=0)
     {
-      currentGoal.pose.position.x = x;
-      currentGoal.pose.position.y = y;
-      currentGoal.pose.orientation.z = theta;
+      currentGoal.target_pose.header.frame_id = "/map";
+      currentGoal.target_pose.pose.position.x = x;
+      currentGoal.target_pose.pose.position.y = y;
+      currentGoal.target_pose.pose.orientation = tf::createQuaternionMsgFromYaw(theta);
     }
 
     bool popListToGoal()
@@ -78,6 +98,10 @@ class Controller
     {
       FILE * pFile;
       pFile = fopen(fileName.c_str(), "r");
+      if(pFile==NULL){
+        printf("File not found.\n");
+        exit(1);
+      }
 
       std::vector<double> pin(3);
       for (;!feof(pFile);)
@@ -105,11 +129,13 @@ class Controller
       return 1;
     }
 
-    void setNodeHandle(ros::NodeHandle *n)
+    void waitForMoveBaseServer()
     {
-      node = n;
+      ac.waitForServer(ros::Duration(5.0));
     }
-    Controller(ros::NodeHandle *n)
+
+    Controller(ros::NodeHandle *n, std::string base_name="move_base")
+    : ac(base_name, true)   
     {
       node = n;
     }
@@ -118,23 +144,44 @@ class Controller
 
 int main(int argc, char** argv)
 {
-
   ros::init(argc, argv, "navPoints");
   ros::NodeHandle node;
 
   geometry_msgs::PoseStamped posegoal;
 
+  ROS_INFO("Init");
   Controller rosControl(&node);
+  ROS_INFO("Created controller");
 
-  rosControl.setMoveBaseStatusSubscriber("move_base/status", 10);
-  rosControl.setMoveBasePublisher("/move_base_simple/goal", 10);
+  rosControl.setMoveBaseStatusSubscriber("move_base/status", 1);
+  rosControl.setMoveBasePublisher("/move_base_simple/goal", 1);
+  ROS_INFO("Set publisher and subscriber");
 
   rosControl.readGoalsFile("checkpoints.txt");
-  rosControl.popListToGoal();
-  rosControl.publishGoal();
+  ROS_INFO("read the file");
+  
 
+  ros::Rate loopRate(10.0);
+
+  while(ros::ok())
+  {
+    ros::spinOnce();
+    rosControl.popListToGoal();
+    ROS_INFO("Poplist");
+    rosControl.publishGoal();
+    ROS_INFO("published goal");
+
+    rosControl.waitResultNavigation();
+    ROS_INFO("We got a result!");
+    
+    if(rosControl.getNavigationState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+      continue;
+    else
+      ROS_INFO("Planner failed!!! Using next setpoint.");
+    ros::spinOnce();
+    loopRate.sleep();
+  }
   ros::spin();
 
   return 0;
-  
 }
