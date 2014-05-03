@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   tf
   actionlib
+  sound_play
   move_base_msgs
 )
 
@@ -99,12 +100,13 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+#  src/${PROJECT_NAME}/include
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(patrolling_fri
-#   src/${PROJECT_NAME}/patrolling_fri.cpp
+# add_library(graphBuilderLib
+#   src/${PROJECT_NAME}/src/graphBuilder.cpp
 # )
 
 ## Declare a cpp executable
@@ -169,3 +171,6 @@ include_directories(
 
 add_executable(mpoint src/mpoint.cpp)
 target_link_libraries(mpoint ${catkin_LIBRARIES})
+
+#add_executable(graph src/graphBuilder.cpp)
+#target_link_libraries(graph ${catkin_LIBRARIES})

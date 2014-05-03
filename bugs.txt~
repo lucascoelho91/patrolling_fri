@@ -14,7 +14,7 @@
 Run segway_gazebo and after that, run the mpoints. Seems that it calls the service but it doesn't publish to move_base/goal and never answers back so the planner is not receiving the goal and program is stuck in the waiting for the response
 
 -- expected behavior
-Something should had been published to move_base/goal and the robot should change the plans
+Something should haD been published to move_base/goal and the robot should change the plans
 
 -- observed (buggy) behavior
 Nothing is published to move_base/goal

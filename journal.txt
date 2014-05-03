@@ -5,7 +5,8 @@
 - The program builds fine but I got a segmentation fault just in the beginning of the execution. I was thinking in adding some print to check where the seg fault occurs. My suggestion is to check the NodeHandle creation and passing. Maybe we can create the nodeHandle inside the class again, I think that error I got was related to the missing const in the list of arguments.
 - I'm happy with the structure of the program now. Because I know that I can reuse this code to the next steps of the program. That list of checkpoints will be very useful.
 - Code commited to GitHub
+- Tried to implement Move Base Client. Something wrong is happening. I asked help to Ali.
 
 - Hours of work
   * 3:30 to 6:30
-  * 7:40 to
+  * 7:40 to 1:00
